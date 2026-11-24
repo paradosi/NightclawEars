@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/paradosi/NightclawEars/main/media/art/logo_400.png" alt="Nightclaw Ears logo" width="128" align="right">
+
 # Nightclaw Ears
 
 A small **WoW Forever** addon for the Nightclaw Druids of Shadowgale Forest. It counts your
@@ -65,6 +67,20 @@ It prints a line when it learns either number, and after each turn-in.
 
 Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in, whether it opens on Zephras Isle).
 
+## Installation
+
+Download the latest zip from [GitHub Releases](https://github.com/paradosi/NightclawEars/releases) and
+extract it into `World of Warcraft\_forever_\Interface\AddOns\`, so you end up with
+`AddOns\NightclawEars\NightclawEars.toc`. Restart the game (a newly added addon needs a restart, not just
+`/reload`).
+
+## Compatibility
+
+| Client | Supported |
+|---|---|
+| WoW Forever (interface 16001) | yes |
+| Retail, TBC Anniversary, Classic Era | no: the faction and quests exist only in Forever |
+
 ## Look and fonts
 
 The panel follows [wowdb.dev](https://wowdb.dev)'s design: its colours, a hairline border, and its two
@@ -74,3 +90,8 @@ typefaces, shipped in `media/fonts`:
 - **JetBrains Mono** (numbers), Copyright 2020 The JetBrains Mono Project Authors
 
 Both are under the SIL Open Font License 1.1; the licence texts are next to the fonts.
+
+## Licence
+
+The addon is MIT (see `LICENSE`). Oswald and JetBrains Mono are under the SIL Open Font License; their
+licence files ship next to them in `media/fonts`.

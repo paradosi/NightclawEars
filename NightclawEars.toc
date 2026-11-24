@@ -4,6 +4,7 @@
 ## Author: paradosi-Dreamscythe
 ## Version: 0.4.1
 ## Category-enUS: Quests
+## IconTexture: Interface\AddOns\NightclawEars\media\textures\logo_64
 ## SavedVariables: NightclawEarsDB
 ## AddonCompartmentFunc: NightclawEars_OnCompartmentClick
 

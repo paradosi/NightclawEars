@@ -2,6 +2,7 @@
 
 ## v0.4.1
 
+- A logo, in the AddOns list and the addon compartment.
 - The quest giver is Vayn Moongaze, not Moonclaw: the Target button now finds him. It also learns his name from
   the turn-in window, so it works in any client language.
 
