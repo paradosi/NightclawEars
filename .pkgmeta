@@ -1,0 +1,16 @@
+package-as: NightclawEars
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+# media/fonts ships, licence files included: the OFL requires them alongside the fonts
+ignore:
+  - README.md
+  - CHANGELOG.md
+  - CURSEFORGE.md
+  - LICENSE
+  - .github
+  - .gitignore
+  - media/art
+  - media/screenshots
