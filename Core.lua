@@ -442,8 +442,11 @@ end
 -- The turn-in window lists the ears the quest takes
 local function OnQuestProgress()
     if GetQuestID() ~= REPEAT then return end
+    -- UnitName can be a secret value on Forever (identity restrictions): never compare one
     local npc = UnitName("npc")
-    if npc and npc ~= "" and npc ~= db.vayn then db.vayn = npc; SetTarget() end
+    if npc and (not canaccessvalue or canaccessvalue(npc)) and npc ~= "" and npc ~= db.vayn then
+        db.vayn = npc; SetTarget()
+    end
     for i = 1, GetNumQuestItems() do
         local _, _, count, _, _, itemID = GetQuestItemInfo("required", i)
         if itemID == EAR and count and count > 0 and count ~= db.ears then
