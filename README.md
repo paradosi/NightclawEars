@@ -16,6 +16,24 @@ pops up. It shows:
 
 The ear's tooltip gets a line too: *Nightclaw Druids: 971 more ears to Exalted*.
 
+## Turning in
+
+**Talk to Vayn Moonclaw and the ears go in by themselves.** With at least one turn-in's worth of ears in
+your bags, the addon picks *More Al'Aketh Ears*, hands the ears in and takes the reward: one right-click on
+Vayn per turn-in. It touches only that quest, never picks a reward for you when there's a choice, and
+**holding Shift as you talk to her skips it** (or `/ears turnin` switches it off).
+
+The **Target Vayn Moonclaw** button on the panel targets her, so your *Interact with Target* key (Key
+Bindings → Targeting) can then talk to her.
+
+> [!NOTE]
+> The addon can't start the conversation for you. Talking to an NPC only works from your own click or a
+> key binding: Blizzard blocks addons from doing it, and there is no `/interact` macro command.
+
+> [!NOTE]
+> The button is a secure (macro) button, so during combat the panel can't open, close or move: those
+> wait until combat ends.
+
 ## How it counts
 
 | | |
@@ -38,6 +56,7 @@ It prints a line when it learns either number, and after each turn-in.
 | | |
 |---|---|
 | `/ears` | show or hide the panel |
+| `/ears turnin` | turn auto turn-in at Vayn Moonclaw on or off |
 | `/ears auto` | turn opening on Zephras Isle on or off |
 | `/ears lock` | lock or unlock the panel (drag to move) |
 | `/ears reset` | move the panel back to the middle |

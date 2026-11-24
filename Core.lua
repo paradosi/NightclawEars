@@ -14,7 +14,9 @@ local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrin
 -- data says 5; Wowhead says 200 rep. Both are replaced by what the game shows:
 -- ears from the turn-in window (QUEST_PROGRESS), rep from the actual gain.
 -- shown: opened by hand (stays open everywhere). auto: open on arriving at Zephras Isle.
-local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true }
+-- turnin: hand the ears in by itself when you talk to Vayn (Shift skips).
+local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true, turnin = true }
+local VAYN = "Vayn Moonclaw"
 
 local db
 local frame
@@ -161,6 +163,44 @@ local function Refresh()
         ui.more:SetText(Num(math.max(0, ears - all)))
     end
     ui.rate:SetText(db.ears .. " ears = " .. db.rep .. " rep per turn-in")
+    ui.auto:SetText(db.turnin and "auto turn-in" or "auto turn-in off")
+    ui.auto:SetTextColor(unpack(db.turnin and C.accent or C.muted))
+end
+
+-- A secure macro button: /target Vayn Moonclaw. Talking to her still takes your own
+-- click or the "Interact with Target" key: addons can't start an NPC conversation.
+-- Forever's secure buttons get OnClick on the press only, so it acts on the down.
+local function TargetButton()
+    local b = CreateFrame("Button", "NightclawEarsTargetButton", frame, "SecureActionButtonTemplate")
+    b:SetPoint("TOPLEFT", PAD, -186)
+    b:SetPoint("TOPRIGHT", -PAD, -186)
+    b:SetHeight(22)
+    b:RegisterForClicks("AnyDown")
+    b:SetAttribute("useOnKeyDown", true)
+    b:SetAttribute("type", "macro")
+    b:SetAttribute("macrotext", "/target " .. VAYN)
+
+    local bg = b:CreateTexture(nil, "BACKGROUND"); Fill(bg, C.chip); bg:SetAllPoints()
+    local hl = b:CreateTexture(nil, "HIGHLIGHT"); hl:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.14); hl:SetAllPoints()
+    for _, side in ipairs({ { "TOPLEFT", "TOPRIGHT" }, { "BOTTOMLEFT", "BOTTOMRIGHT" } }) do
+        local t = b:CreateTexture(nil, "BORDER"); t:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.35)
+        t:SetPoint(side[1]); t:SetPoint(side[2]); t:SetHeight(1)
+    end
+    local label = Text(b, DISPLAY, 10, C.accent, "CENTER")
+    label:SetPoint("CENTER")
+    label:SetText("TARGET VAYN MOONCLAW")
+
+    b:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Target " .. VAYN, 1, 1, 1)
+        GameTooltip:AddLine("Then right-click her, or press your Interact with Target key.", 0.761, 0.784, 0.855, true)
+        if db.turnin then
+            GameTooltip:AddLine("The ears go in by themselves. Hold Shift as you talk to her to skip that.", 0.761, 0.784, 0.855, true)
+        end
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", GameTooltip_Hide)
+    return b
 end
 
 local function SavePosition()
@@ -170,7 +210,7 @@ end
 
 local function BuildFrame()
     frame = CreateFrame("Frame", "NightclawEarsFrame", UIParent)
-    frame:SetSize(W, 214)
+    frame:SetSize(W, 240)
     frame:SetFrameStrata("MEDIUM")
     local p = db.point
     if p then frame:SetPoint(p[1], UIParent, p[2], p[3], p[4]) else frame:SetPoint("CENTER", UIParent, "CENTER", 300, 0) end
@@ -178,7 +218,8 @@ local function BuildFrame()
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", function(self) if not db.locked then self:StartMoving() end end)
+    -- The target button is secure, which makes the panel protected in combat: no moving it then
+    frame:SetScript("OnDragStart", function(self) if not db.locked and not InCombatLockdown() then self:StartMoving() end end)
     frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); SavePosition() end)
 
     -- Surface with a 1px inset border (box-shadow: inset 0 0 0 1px var(--border))
@@ -237,19 +278,22 @@ local function BuildFrame()
     ui.rep     = Row(-118, "TO EXALTED")
     ui.turnins = Row(-140, "TURN-INS")
     ui.more    = Row(-162, "STILL TO COLLECT", true)
+    TargetButton()
 
     ui.rate = Text(frame, MONO, 9, C.muted)
     ui.rate:SetPoint("BOTTOMLEFT", PAD, 11)
-    local site = Text(frame, MONO, 9, C.muted, "RIGHT")
-    site:SetPoint("BOTTOMRIGHT", -PAD, 11)
-    site:SetText("wowdb.dev")
+    ui.auto = Text(frame, MONO, 9, C.accent, "RIGHT")
+    ui.auto:SetPoint("BOTTOMRIGHT", -PAD, 11)
 
     frame:SetScript("OnShow", Refresh)
 end
 
 local autoShown = false  -- opened by arriving in the zone, so leaving closes it
+local afterCombat        -- show/hide asked for during combat, done when it ends
 
 local function ShowPanel(show)
+    if InCombatLockdown() then afterCombat = show; return end
+    afterCombat = nil
     if show and not frame then BuildFrame() end
     if frame then frame:SetShown(show) end
     Refresh()
@@ -258,8 +302,10 @@ end
 -- By hand (/ears, the compartment button): remembered, and the zone leaves it alone
 local function Toggle()
     local show = not (frame and frame:IsShown())
+    if afterCombat ~= nil then show = not afterCombat end
     db.shown, autoShown = show, false
     ShowPanel(show)
+    if InCombatLockdown() then Say(show and "the panel opens after combat." or "the panel closes after combat.") end
 end
 
 function NightclawEars_OnCompartmentClick()
@@ -345,6 +391,44 @@ local function OnTurnedIn(questID)
     end)
 end
 
+---- Auto turn-in: once you're talking to Vayn, pick the repeatable, hand the ears in,
+---- take the reward. Only quest 93459, only with enough ears in your bags, never
+---- with Shift held, and never when the reward is a choice.
+
+local function AutoOK()
+    return db.turnin and not IsShiftKeyDown()
+end
+
+local function EnoughEars()
+    return (EarCount()) >= db.ears
+end
+
+-- Vayn's chat window (gossip NPCs)
+local function OnGossipShow()
+    if not AutoOK() or not EnoughEars() then return end
+    for _, q in ipairs(C_GossipInfo.GetActiveQuests() or {}) do
+        if q.questID == REPEAT then C_GossipInfo.SelectActiveQuest(REPEAT); return end
+    end
+    for _, q in ipairs(C_GossipInfo.GetAvailableQuests() or {}) do
+        if q.questID == REPEAT then C_GossipInfo.SelectAvailableQuest(REPEAT); return end
+    end
+end
+
+-- The same list, for NPCs that open the quest window straight away
+local function OnQuestGreeting()
+    if not AutoOK() or not EnoughEars() then return end
+    for i = 1, GetNumActiveQuests() do
+        if GetActiveQuestID(i) == REPEAT then SelectActiveQuest(i); return end
+    end
+    for i = 1, GetNumAvailableQuests() do
+        if select(5, GetAvailableQuestInfo(i)) == REPEAT then SelectAvailableQuest(i); return end
+    end
+end
+
+local function OnQuestDetail()
+    if GetQuestID() == REPEAT and AutoOK() and EnoughEars() then AcceptQuest() end
+end
+
 -- The turn-in window lists the ears the quest takes
 local function OnQuestProgress()
     if GetQuestID() ~= REPEAT then return end
@@ -356,6 +440,13 @@ local function OnQuestProgress()
             Refresh()
         end
     end
+    if AutoOK() and IsQuestCompletable() then CompleteQuest() end
+end
+
+local function OnQuestComplete()
+    if GetQuestID() ~= REPEAT or not AutoOK() then return end
+    local choices = GetNumQuestChoices()
+    if choices <= 1 then GetQuestReward(choices) end
 end
 
 ---- Tooltip line on the ear itself
@@ -391,6 +482,11 @@ events:SetScript("OnEvent", function(_, event, arg1)
         events:RegisterEvent("BAG_UPDATE_DELAYED")
         events:RegisterEvent("QUEST_PROGRESS")
         events:RegisterEvent("QUEST_TURNED_IN")
+        events:RegisterEvent("GOSSIP_SHOW")
+        events:RegisterEvent("QUEST_GREETING")
+        events:RegisterEvent("QUEST_DETAIL")
+        events:RegisterEvent("QUEST_COMPLETE")
+        events:RegisterEvent("PLAYER_REGEN_ENABLED")
         events:RegisterEvent("PLAYER_ENTERING_WORLD")
         events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
         events:RegisterEvent("ZONE_CHANGED")
@@ -407,6 +503,16 @@ events:SetScript("OnEvent", function(_, event, arg1)
         OnQuestProgress()
     elseif event == "QUEST_TURNED_IN" then
         OnTurnedIn(arg1)
+    elseif event == "GOSSIP_SHOW" then
+        OnGossipShow()
+    elseif event == "QUEST_GREETING" then
+        OnQuestGreeting()
+    elseif event == "QUEST_DETAIL" then
+        OnQuestDetail()
+    elseif event == "QUEST_COMPLETE" then
+        OnQuestComplete()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if afterCombat ~= nil then ShowPanel(afterCombat) end
     end
 end)
 
@@ -423,8 +529,13 @@ SlashCmdList.NIGHTCLAWEARS = function(msg)
     elseif msg == "auto" then
         db.auto = not db.auto
         Say(db.auto and "the panel opens when you arrive on Zephras Isle." or "the panel no longer opens by itself.")
+    elseif msg == "turnin" or msg == "autoturnin" then
+        db.turnin = not db.turnin
+        Say(db.turnin and "ears go in by themselves when you talk to Vayn Moonclaw (hold Shift to skip)."
+            or "auto turn-in off: hand the ears in yourself.")
+        Refresh()
     elseif msg == "help" then
-        Say("/ears shows or hides the panel · /ears auto (open on Zephras Isle) · /ears lock · /ears reset (position)")
+        Say("/ears shows or hides the panel · /ears turnin (auto turn-in at Vayn) · /ears auto (open on Zephras Isle) · /ears lock · /ears reset (position)")
     else
         Toggle()
     end

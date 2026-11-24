@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.0
+
+- Auto turn-in: talk to Vayn Moonclaw with enough ears and they go in by themselves. Hold Shift to skip,
+  `/ears turnin` to switch it off. Only the ear quest, and never when the reward is a choice.
+- A Target Vayn Moonclaw button on the panel. Pair it with your Interact with Target key.
+- The panel waits for the end of combat to open or close (the button is a secure one).
+
 ## v0.3.1
 
 - The standing bar is easier to see: a faint gold track, a little taller, and always a sliver of gold at the start.
