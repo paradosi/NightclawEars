@@ -43,3 +43,13 @@ It prints a line when it learns either number, and after each turn-in.
 | `/ears reset` | move the panel back to the middle |
 
 Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in, whether it opens on Zephras Isle).
+
+## Look and fonts
+
+The panel follows [wowdb.dev](https://wowdb.dev)'s design: its colours, a hairline border, and its two
+typefaces, shipped in `media/fonts`:
+
+- **Oswald** (labels, standing), Copyright 2016 The Oswald Project Authors
+- **JetBrains Mono** (numbers), Copyright 2020 The JetBrains Mono Project Authors
+
+Both are under the SIL Open Font License 1.1; the licence texts are next to the fonts.

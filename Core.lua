@@ -17,14 +17,14 @@ local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrin
 local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true }
 
 local db
-local frame, lines = nil, {}
+local frame
 
 local function Num(n)
     return FormatLargeNumber and FormatLargeNumber(n) or tostring(n)
 end
 
 local function Say(msg)
-    print("|cff9370dbNightclaw Ears|r: " .. msg)
+    print("|cffe3b664Nightclaw Ears|r: " .. msg)
 end
 
 local function EarCount()
@@ -59,35 +59,108 @@ local function StandingLabel(reaction)
     return _G["FACTION_STANDING_LABEL" .. (reaction or 4)] or "?"
 end
 
----- Panel
+---- Panel, in wowdb.dev's look: navy surface, hairline borders, gold accent,
+---- Oswald for labels and JetBrains Mono for numbers (both SIL OFL, media/fonts)
+
+local FONTS = "Interface\\AddOns\\" .. addonName .. "\\media\\fonts\\"
+local DISPLAY, DISPLAY_LIGHT = FONTS .. "Oswald-Regular.ttf", FONTS .. "Oswald-Light.ttf"
+local MONO, MONO_MEDIUM = FONTS .. "JetBrainsMono-Regular.ttf", FONTS .. "JetBrainsMono-Medium.ttf"
+
+-- wowdb's tokens (apps/web/app/globals.css)
+local C = {
+    bg        = { 0.086, 0.106, 0.161, 0.96 },  -- --bg #161b29
+    deep      = { 0.063, 0.075, 0.114, 1 },     -- --bg-deep #10131d
+    surface2  = { 0.137, 0.165, 0.243, 1 },     -- --surface-2 #232a3e
+    border    = { 1, 1, 1, 0.10 },              -- --border
+    divider   = { 1, 1, 1, 0.07 },              -- --divider
+    primary   = { 0.961, 0.969, 0.988 },        -- --text-primary #f5f7fc
+    secondary = { 0.761, 0.784, 0.855 },        -- --text-secondary #c2c8da
+    muted     = { 0.588, 0.616, 0.702 },        -- --text-muted #969db3
+    accent    = { 0.890, 0.714, 0.392 },        -- --accent #e3b664
+    accentHi  = { 0.953, 0.835, 0.584 },        -- --accent-hi #f3d595
+    chip      = { 0.890, 0.714, 0.392, 0.16 },  -- --chip-accent
+    place     = { 0.953, 0.663, 0.510 },        -- --place #f3a982
+}
+local W, PAD = 256, 14
+local TRACK_W = W - PAD * 2 - 34 - 10  -- the bar, right of the 34px icon
+local ui = {}
+
+local function Fill(tex, c) tex:SetColorTexture(c[1], c[2], c[3], c[4] or 1) end
+
+local function Text(parent, font, size, color, justify)
+    local fs = parent:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(font, size, "")
+    fs:SetTextColor(color[1], color[2], color[3])
+    fs:SetJustifyH(justify or "LEFT")
+    fs:SetWordWrap(false)
+    return fs
+end
+
+local function Line(parent, y, c, x1, x2)
+    local t = parent:CreateTexture(nil, "BORDER")
+    Fill(t, c)
+    t:SetHeight(1)
+    t:SetPoint("TOPLEFT", x1 or 0, y)
+    t:SetPoint("TOPRIGHT", -(x2 or 0), y)
+    return t
+end
+
+-- --gold-line: transparent → gold → transparent
+local function GoldLine(parent, y)
+    local a, b = parent:CreateTexture(nil, "BORDER"), parent:CreateTexture(nil, "BORDER")
+    for _, t in ipairs({ a, b }) do t:SetColorTexture(1, 1, 1, 1); t:SetHeight(1) end
+    a:SetPoint("TOPLEFT", 0, y); a:SetPoint("TOPRIGHT", parent, "TOP", 0, y)
+    b:SetPoint("TOPLEFT", parent, "TOP", 0, y); b:SetPoint("TOPRIGHT", 0, y)
+    local r, g, bl = C.accentHi[1], C.accentHi[2], C.accentHi[3]
+    a:SetGradient("HORIZONTAL", CreateColor(r, g, bl, 0), CreateColor(r, g, bl, 0.8))
+    b:SetGradient("HORIZONTAL", CreateColor(r, g, bl, 0.8), CreateColor(r, g, bl, 0))
+end
+
+-- A facts row: uppercase Oswald label on the left, mono value on the right, hairline under it
+local function Row(y, label, big)
+    local l = Text(frame, DISPLAY, 10, C.muted)
+    l:SetPoint("LEFT", frame, "TOPLEFT", PAD, y - 10)
+    l:SetText(label)
+    local v = Text(frame, big and MONO_MEDIUM or MONO, big and 15 or 11, big and C.accent or C.primary, "RIGHT")
+    v:SetPoint("RIGHT", frame, "TOPRIGHT", -PAD, y - 10)
+    Line(frame, y - 20, C.divider, PAD, PAD)
+    return v
+end
 
 local function Refresh()
     if not frame or not frame:IsShown() then return end
     local f, met = Faction()
     local bags, all = EarCount()
     local rep, turnins, ears = Need()
-    local color = FACTION_BAR_COLORS and FACTION_BAR_COLORS[f.reaction or 4]
-    local hex = color and string.format("|cff%02x%02x%02x", color.r * 255, color.g * 255, color.b * 255) or "|cffffffff"
 
+    ui.standing:SetText(StandingLabel(f.reaction))
+    ui.notMet:SetText(met and "" or "not met yet")
     local into = (f.currentStanding or 0) - (f.currentReactionThreshold or 0)
     local size = (f.nextReactionThreshold or 0) - (f.currentReactionThreshold or 0)
-    lines[1]:SetText(hex .. StandingLabel(f.reaction) .. "|r" ..
-        (f.reaction and f.reaction < 8 and size > 0 and ("  " .. Num(into) .. " / " .. Num(size)) or "") ..
-        (met and "" or "  |cff888888(not met yet)|r"))
-    lines[2]:SetText("Ears: |cffffffff" .. Num(bags) .. "|r" .. (all > bags and ("  (+" .. Num(all - bags) .. " in bank)") or ""))
-
-    if rep == 0 then
-        lines[3]:SetText("|cff00ff00Exalted.|r")
-        lines[4]:SetText("")
-    elseif db.cappedAt and (f.reaction or 4) >= db.cappedAt then
-        lines[3]:SetText("|cffff8000Turn-ins stopped giving rep at " .. StandingLabel(db.cappedAt) .. ".|r")
-        lines[4]:SetText(Num(rep) .. " rep to Exalted from elsewhere")
+    local exalted = rep == 0
+    if exalted or size <= 0 then
+        ui.progress:SetText("")
+        ui.fill:SetWidth(TRACK_W)
     else
-        local more = math.max(0, ears - all)
-        lines[3]:SetText("To Exalted: |cffffffff" .. Num(rep) .. "|r rep, " .. Num(turnins) .. " turn-ins")
-        lines[4]:SetText(Num(ears) .. " ears, |cffffd100" .. Num(more) .. " more|r to collect")
+        ui.progress:SetText(Num(into) .. " / " .. Num(size))
+        ui.fill:SetWidth(math.max(0.01, TRACK_W * math.min(1, into / size)))
     end
-    lines[5]:SetText("|cff888888" .. db.ears .. " ears = " .. db.rep .. " rep per turn-in|r")
+
+    ui.ears:SetText(Num(bags) .. (all > bags and ("  |cff969db3+" .. Num(all - bags) .. " bank|r") or ""))
+    if exalted then
+        ui.rep:SetText("|cffe3b664Exalted|r")
+        ui.turnins:SetText("—")
+        ui.more:SetText("0")
+    elseif db.cappedAt and (f.reaction or 4) >= db.cappedAt then
+        ui.rep:SetText(Num(rep) .. " rep")
+        ui.turnins:SetText("|cfff3a982no rep past " .. StandingLabel(db.cappedAt) .. "|r")
+        ui.more:SetText("—")
+    else
+        ui.rep:SetText(Num(rep) .. " rep")
+        ui.turnins:SetText(Num(turnins) .. "  |cff969db3·  " .. Num(ears) .. " ears|r")
+        ui.more:SetText(Num(math.max(0, ears - all)))
+    end
+    ui.rate:SetText(db.ears .. " ears = " .. db.rep .. " rep per turn-in")
 end
 
 local function SavePosition()
@@ -96,13 +169,9 @@ local function SavePosition()
 end
 
 local function BuildFrame()
-    frame = CreateFrame("Frame", "NightclawEarsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(230, 104)
-    frame:SetBackdrop({ bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 14,
-        insets = { left = 3, right = 3, top = 3, bottom = 3 } })
-    frame:SetBackdropColor(0, 0, 0, 0.75)
-    frame:SetBackdropBorderColor(0.58, 0.44, 0.86)
+    frame = CreateFrame("Frame", "NightclawEarsFrame", UIParent)
+    frame:SetSize(W, 214)
+    frame:SetFrameStrata("MEDIUM")
     local p = db.point
     if p then frame:SetPoint(p[1], UIParent, p[2], p[3], p[4]) else frame:SetPoint("CENTER", UIParent, "CENTER", 300, 0) end
     frame:SetClampedToScreen(true)
@@ -112,23 +181,69 @@ local function BuildFrame()
     frame:SetScript("OnDragStart", function(self) if not db.locked then self:StartMoving() end end)
     frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); SavePosition() end)
 
-    local icon = frame:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(18, 18)
-    icon:SetPoint("TOPLEFT", 10, -9)
-    icon:SetTexture(C_Item.GetItemIconByID(EAR))
-
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("LEFT", icon, "RIGHT", 6, 0)
-    title:SetText("Nightclaw Druids")
-
-    local prev = icon
-    for i = 1, 5 do
-        local fs = frame:CreateFontString(nil, "OVERLAY", i == 5 and "GameFontNormalSmall" or "GameFontHighlightSmall")
-        fs:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, i == 1 and -6 or -3)
-        fs:SetJustifyH("LEFT")
-        lines[i] = fs
-        prev = fs
+    -- Surface with a 1px inset border (box-shadow: inset 0 0 0 1px var(--border))
+    local bg = frame:CreateTexture(nil, "BACKGROUND"); Fill(bg, C.bg); bg:SetAllPoints()
+    local head = frame:CreateTexture(nil, "BACKGROUND", nil, 1); Fill(head, C.deep)
+    head:SetPoint("TOPLEFT"); head:SetPoint("TOPRIGHT"); head:SetHeight(34)
+    for _, side in ipairs({ { "TOPLEFT", "TOPRIGHT", nil, 1 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 1 },
+                            { "TOPLEFT", "BOTTOMLEFT", 1, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 1, nil } }) do
+        local t = frame:CreateTexture(nil, "BORDER"); Fill(t, C.border)
+        t:SetPoint(side[1]); t:SetPoint(side[2])
+        if side[3] then t:SetWidth(1) else t:SetHeight(1) end
     end
+
+    -- Header: the gold dot, the name, and a chip, like wowdb's brand bar
+    local dot = frame:CreateTexture(nil, "ARTWORK"); Fill(dot, C.accent)
+    dot:SetSize(7, 7); dot:SetPoint("LEFT", frame, "TOPLEFT", PAD, -17)
+    if frame.CreateMaskTexture and dot.AddMaskTexture then
+        local mask = frame:CreateMaskTexture()
+        mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(dot)
+        dot:AddMaskTexture(mask)
+    end
+    local title = Text(frame, DISPLAY, 13, C.primary)
+    title:SetPoint("LEFT", dot, "RIGHT", 8, 0)
+    title:SetText("Nightclaw Druids")
+    local chipText = Text(frame, DISPLAY, 9, C.accent)
+    chipText:SetText("ZEPHRAS ISLE")
+    chipText:SetPoint("RIGHT", frame, "TOPRIGHT", -PAD - 7, -17)
+    local chip = frame:CreateTexture(nil, "ARTWORK"); Fill(chip, C.chip)
+    chip:SetPoint("TOPLEFT", chipText, "TOPLEFT", -7, 4); chip:SetPoint("BOTTOMRIGHT", chipText, "BOTTOMRIGHT", 7, -4)
+    GoldLine(frame, -34)
+
+    -- Standing: the ear's icon, the standing in light Oswald, a thin gold bar
+    local icon = frame:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(34, 34); icon:SetPoint("TOPLEFT", PAD, -48)
+    icon:SetTexture(C_Item.GetItemIconByID(EAR)); icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    local iconEdge = frame:CreateTexture(nil, "BORDER"); Fill(iconEdge, C.border)
+    iconEdge:SetPoint("TOPLEFT", icon, -1, 1); iconEdge:SetPoint("BOTTOMRIGHT", icon, 1, -1)
+
+    ui.standing = Text(frame, DISPLAY_LIGHT, 22, C.primary)
+    ui.standing:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, 3)
+    ui.notMet = Text(frame, MONO, 9, C.muted)
+    ui.notMet:SetPoint("BOTTOMLEFT", ui.standing, "BOTTOMRIGHT", 6, 4)
+    ui.progress = Text(frame, MONO, 10, C.secondary, "RIGHT")
+    ui.progress:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -PAD, -66)
+
+    ui.track = frame:CreateTexture(nil, "ARTWORK"); Fill(ui.track, C.surface2)
+    ui.track:SetHeight(3)
+    ui.track:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 10, 1)
+    ui.track:SetWidth(TRACK_W)
+    ui.fill = frame:CreateTexture(nil, "ARTWORK", nil, 1); Fill(ui.fill, C.accent)
+    ui.fill:SetHeight(3); ui.fill:SetPoint("LEFT", ui.track, "LEFT")
+
+    -- Facts, as wowdb's item pages list them
+    ui.ears    = Row(-96, "EARS")
+    ui.rep     = Row(-118, "TO EXALTED")
+    ui.turnins = Row(-140, "TURN-INS")
+    ui.more    = Row(-162, "STILL TO COLLECT", true)
+
+    ui.rate = Text(frame, MONO, 9, C.muted)
+    ui.rate:SetPoint("BOTTOMLEFT", PAD, 11)
+    local site = Text(frame, MONO, 9, C.muted, "RIGHT")
+    site:SetPoint("BOTTOMRIGHT", -PAD, 11)
+    site:SetText("wowdb.dev")
+
     frame:SetScript("OnShow", Refresh)
 end
 
@@ -252,7 +367,7 @@ local function AddTooltip(tooltip, data)
         tooltip:AddLine("Nightclaw Druids: Exalted", 0, 1, 0)
     else
         local more = math.max(0, ears - select(2, EarCount()))
-        tooltip:AddLine(string.format("Nightclaw Druids: %s more ears to Exalted", Num(more)), 0.58, 0.44, 0.86)
+        tooltip:AddLine(string.format("Nightclaw Druids: %s more ears to Exalted", Num(more)), 0.890, 0.714, 0.392)
     end
 end
 

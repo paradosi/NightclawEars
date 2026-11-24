@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.0
+
+- New look, after wowdb.dev: a dark navy panel with hairline borders and a gold accent, Oswald for labels
+  and JetBrains Mono for numbers, a gold progress bar for your standing, and the numbers as a list of facts.
+
 ## v0.2.0
 
 - The panel opens by itself when you arrive on Zephras Isle (Shadowgale Forest, the Shrine of Akir, Gustberry
