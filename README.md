@@ -1,0 +1,41 @@
+# Nightclaw Ears
+
+A small **WoW Forever** addon for the Nightclaw Druids of Shadowgale Forest. It counts your
+**Al'Aketh Cultist's Ears** and works out how many more the druids want before you're **Exalted**.
+
+## What it shows
+
+A movable panel (`/ears`, or the addon compartment button):
+
+- your Nightclaw Druids standing and progress through it
+- ears in your bags (and in your bank, once you've opened it this session)
+- rep left to Exalted, how many turn-ins that is, and how many ears you still have to collect
+
+The ear's tooltip gets a line too: *Nightclaw Druids: 971 more ears to Exalted*.
+
+## How it counts
+
+| | |
+|---|---|
+| Faction | Nightclaw Druids (2758). Exalted begins at 42,000 standing above Neutral |
+| First quest | *Mercy Falls on Deaf Ears* (93165): 5 ears, 1,000 rep, once. Counted until you've done it |
+| Repeatable | *More Al'Aketh Ears* (93459), Vayn Moonclaw: 200 rep per turn-in |
+
+The quest text says the repeatable takes 10 ears, but its objective data and Wowhead say 5, so the addon
+starts at **5 ears = 200 rep** and corrects itself:
+
+- **ears per turn-in** are read from the turn-in window when you talk to Vayn Moonclaw
+- **rep per turn-in** is read from the reputation you actually gain
+- if a turn-in gives **no** reputation, the repeatable has a cap; the panel says at which standing
+
+It prints a line when it learns either number, and after each turn-in.
+
+## Commands
+
+| | |
+|---|---|
+| `/ears` | show or hide the panel |
+| `/ears lock` | lock or unlock the panel (drag to move) |
+| `/ears reset` | move the panel back to the middle |
+
+Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in).

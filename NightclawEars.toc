@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: Nightclaw Ears
+## Notes: Counts your Al'Aketh Cultist's Ears and how many more the Nightclaw Druids want before you're Exalted. /ears
+## Author: paradosi-Dreamscythe
+## Version: 0.1.0
+## Category-enUS: Quests
+## SavedVariables: NightclawEarsDB
+## AddonCompartmentFunc: NightclawEars_OnCompartmentClick
+
+Core.lua
