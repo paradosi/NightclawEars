@@ -70,7 +70,7 @@ local MONO, MONO_MEDIUM = FONTS .. "JetBrainsMono-Regular.ttf", FONTS .. "JetBra
 local C = {
     bg        = { 0.086, 0.106, 0.161, 0.96 },  -- --bg #161b29
     deep      = { 0.063, 0.075, 0.114, 1 },     -- --bg-deep #10131d
-    surface2  = { 0.137, 0.165, 0.243, 1 },     -- --surface-2 #232a3e
+    track     = { 0.890, 0.714, 0.392, 0.18 },  -- the bar's empty part: gold, faint, so it shows on the navy
     border    = { 1, 1, 1, 0.10 },              -- --border
     divider   = { 1, 1, 1, 0.07 },              -- --divider
     primary   = { 0.961, 0.969, 0.988 },        -- --text-primary #f5f7fc
@@ -143,7 +143,7 @@ local function Refresh()
         ui.fill:SetWidth(TRACK_W)
     else
         ui.progress:SetText(Num(into) .. " / " .. Num(size))
-        ui.fill:SetWidth(math.max(0.01, TRACK_W * math.min(1, into / size)))
+        ui.fill:SetWidth(math.max(2, TRACK_W * math.min(1, into / size)))  -- a 2px sliver at the start
     end
 
     ui.ears:SetText(Num(bags) .. (all > bags and ("  |cff969db3+" .. Num(all - bags) .. " bank|r") or ""))
@@ -157,7 +157,7 @@ local function Refresh()
         ui.more:SetText("—")
     else
         ui.rep:SetText(Num(rep) .. " rep")
-        ui.turnins:SetText(Num(turnins) .. "  |cff969db3·  " .. Num(ears) .. " ears|r")
+        ui.turnins:SetText(Num(turnins))
         ui.more:SetText(Num(math.max(0, ears - all)))
     end
     ui.rate:SetText(db.ears .. " ears = " .. db.rep .. " rep per turn-in")
@@ -225,12 +225,12 @@ local function BuildFrame()
     ui.progress = Text(frame, MONO, 10, C.secondary, "RIGHT")
     ui.progress:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -PAD, -66)
 
-    ui.track = frame:CreateTexture(nil, "ARTWORK"); Fill(ui.track, C.surface2)
-    ui.track:SetHeight(3)
+    ui.track = frame:CreateTexture(nil, "ARTWORK"); Fill(ui.track, C.track)
+    ui.track:SetHeight(4)
     ui.track:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 10, 1)
     ui.track:SetWidth(TRACK_W)
     ui.fill = frame:CreateTexture(nil, "ARTWORK", nil, 1); Fill(ui.fill, C.accent)
-    ui.fill:SetHeight(3); ui.fill:SetPoint("LEFT", ui.track, "LEFT")
+    ui.fill:SetHeight(4); ui.fill:SetPoint("LEFT", ui.track, "LEFT")
 
     -- Facts, as wowdb's item pages list them
     ui.ears    = Row(-96, "EARS")

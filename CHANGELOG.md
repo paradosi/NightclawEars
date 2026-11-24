@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+- The standing bar is easier to see: a faint gold track, a little taller, and always a sliver of gold at the start.
+- Turn-ins shows just the count; the ears are under Still to collect.
+
 ## v0.3.0
 
 - New look, after wowdb.dev: a dark navy panel with hairline borders and a gold accent, Oswald for labels
