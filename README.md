@@ -69,8 +69,9 @@ Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears a
 
 ## Installation
 
-Download the latest zip from [GitHub Releases](https://github.com/paradosi/NightclawEars/releases) and
-extract it into `World of Warcraft\_forever_\Interface\AddOns\`, so you end up with
+Install it from [CurseForge](https://www.curseforge.com/projects/1827781) or
+[Wago](https://addons.wago.io/addons/Q6aq7j6W) with their apps, or download the latest zip from
+[GitHub Releases](https://github.com/paradosi/NightclawEars/releases) and extract it into `World of Warcraft\_forever_\Interface\AddOns\`, so you end up with
 `AddOns\NightclawEars\NightclawEars.toc`. Restart the game (a newly added addon needs a restart, not just
 `/reload`).
 
@@ -95,3 +96,8 @@ Both are under the SIL Open Font License 1.1; the licence texts are next to the 
 
 The addon is MIT (see `LICENSE`). Oswald and JetBrains Mono are under the SIL Open Font License; their
 licence files ship next to them in `media/fonts`.
+
+> [!NOTE]
+> Releases upload to CurseForge (project `1827781`) and Wago (`Q6aq7j6W`) from a `vX.Y.Z` tag, using the
+> `## X-Curse-Project-ID:` and `## X-Wago-ID:` lines in the TOC and the repo's `CF_API_KEY` and
+> `WAGO_API_TOKEN` secrets.

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.0
+
+First public release, on CurseForge and Wago.
+
+- Counts your Al'Aketh Cultist's Ears against Exalted with the Nightclaw Druids: standing, ears in bags and bank,
+  rep and turn-ins left, and ears still to collect.
+- Opens on Zephras Isle, hands the ears in at Vayn Moongaze (Shift skips), and puts a line on the ear's tooltip.
+
 ## v0.4.1
 
 - A logo, in the AddOns list and the addon compartment.
