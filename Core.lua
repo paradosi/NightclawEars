@@ -8,11 +8,13 @@ local FIRST     = 93165   -- "Mercy Falls on Deaf Ears": once, 5 ears, 1000 rep
 local REPEAT    = 93459   -- "More Al'Aketh Ears": the repeatable, Vayn Moonclaw
 local FIRST_EARS, FIRST_REP = 5, 1000
 local EXALTED   = 42000   -- currentStanding at which Exalted starts (Neutral = 0)
+local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrine of Akir, Gustberry Lowlands
 
 -- Ears and rep per repeatable turn-in. The quest text says 10 ears, its objective
 -- data says 5; Wowhead says 200 rep. Both are replaced by what the game shows:
 -- ears from the turn-in window (QUEST_PROGRESS), rep from the actual gain.
-local DEFAULTS = { ears = 5, rep = 200, shown = true, locked = false }
+-- shown: opened by hand (stays open everywhere). auto: open on arriving at Zephras Isle.
+local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true }
 
 local db
 local frame, lines = nil, {}
@@ -130,15 +132,54 @@ local function BuildFrame()
     frame:SetScript("OnShow", Refresh)
 end
 
-local function SetShown(show)
-    db.shown = show
+local autoShown = false  -- opened by arriving in the zone, so leaving closes it
+
+local function ShowPanel(show)
     if show and not frame then BuildFrame() end
     if frame then frame:SetShown(show) end
     Refresh()
 end
 
+-- By hand (/ears, the compartment button): remembered, and the zone leaves it alone
+local function Toggle()
+    local show = not (frame and frame:IsShown())
+    db.shown, autoShown = show, false
+    ShowPanel(show)
+end
+
 function NightclawEars_OnCompartmentClick()
-    SetShown(not db.shown)
+    Toggle()
+end
+
+---- Zephras Isle: open on arrival, close on leaving
+
+local function InZone()
+    local m = C_Map.GetBestMapForUnit("player")
+    for _ = 1, 10 do  -- the map itself or any parent (caves and towns have their own maps)
+        if not m or m == 0 then return false end
+        if m == ZONE then return true end
+        local info = C_Map.GetMapInfo(m)
+        m = info and info.parentMapID
+    end
+    return false
+end
+
+local wasInZone
+
+local function OnZoneChanged()
+    local inZone = InZone()
+    if inZone == wasInZone then return end
+    wasInZone = inZone
+    if inZone then
+        local open = frame and frame:IsShown()
+        if db.auto and not open and Need() > 0 then
+            autoShown = true
+            ShowPanel(true)
+        end
+    elseif autoShown then
+        autoShown = false
+        if not db.shown then ShowPanel(false) end
+    end
 end
 
 ---- Learning ears and rep per turn-in
@@ -235,7 +276,13 @@ events:SetScript("OnEvent", function(_, event, arg1)
         events:RegisterEvent("BAG_UPDATE_DELAYED")
         events:RegisterEvent("QUEST_PROGRESS")
         events:RegisterEvent("QUEST_TURNED_IN")
-        if db.shown then SetShown(true) end
+        events:RegisterEvent("PLAYER_ENTERING_WORLD")
+        events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        events:RegisterEvent("ZONE_CHANGED")
+        if db.shown then ShowPanel(true) end
+        OnZoneChanged()
+    elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" or event == "ZONE_CHANGED" then
+        OnZoneChanged()
     elseif event == "UPDATE_FACTION" then
         OnFactionChanged()
         Refresh()
@@ -258,9 +305,12 @@ SlashCmdList.NIGHTCLAWEARS = function(msg)
         db.point = nil
         if frame then frame:ClearAllPoints(); frame:SetPoint("CENTER", UIParent, "CENTER", 300, 0) end
         Say("panel moved back to the middle.")
+    elseif msg == "auto" then
+        db.auto = not db.auto
+        Say(db.auto and "the panel opens when you arrive on Zephras Isle." or "the panel no longer opens by itself.")
     elseif msg == "help" then
-        Say("/ears shows or hides the panel · /ears lock · /ears reset (position)")
+        Say("/ears shows or hides the panel · /ears auto (open on Zephras Isle) · /ears lock · /ears reset (position)")
     else
-        SetShown(not db.shown)
+        Toggle()
     end
 end

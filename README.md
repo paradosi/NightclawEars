@@ -5,7 +5,10 @@ A small **WoW Forever** addon for the Nightclaw Druids of Shadowgale Forest. It 
 
 ## What it shows
 
-A movable panel (`/ears`, or the addon compartment button):
+A movable panel. It **opens by itself when you arrive on Zephras Isle**, where the ears drop and the druids
+live, and closes when you leave. Close it there and it stays closed until your next visit; open it yourself
+(`/ears`, or the addon compartment button) and it stays open everywhere. Once you're Exalted it no longer
+pops up. It shows:
 
 - your Nightclaw Druids standing and progress through it
 - ears in your bags (and in your bank, once you've opened it this session)
@@ -35,7 +38,8 @@ It prints a line when it learns either number, and after each turn-in.
 | | |
 |---|---|
 | `/ears` | show or hide the panel |
+| `/ears auto` | turn opening on Zephras Isle on or off |
 | `/ears lock` | lock or unlock the panel (drag to move) |
 | `/ears reset` | move the panel back to the middle |
 
-Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in).
+Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in, whether it opens on Zephras Isle).
