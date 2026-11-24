@@ -5,7 +5,7 @@ local addonName = ...
 local FACTION   = 2758    -- Nightclaw Druids (Shadowgale Forest)
 local EAR       = 258771  -- Al'Aketh Cultist's Ear
 local FIRST     = 93165   -- "Mercy Falls on Deaf Ears": once, 5 ears, 1000 rep
-local REPEAT    = 93459   -- "More Al'Aketh Ears": the repeatable, Vayn Moonclaw
+local REPEAT    = 93459   -- "More Al'Aketh Ears": the repeatable, Vayn Moongaze
 local FIRST_EARS, FIRST_REP = 5, 1000
 local EXALTED   = 42000   -- currentStanding at which Exalted starts (Neutral = 0)
 local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrine of Akir, Gustberry Lowlands
@@ -16,7 +16,7 @@ local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrin
 -- shown: opened by hand (stays open everywhere). auto: open on arriving at Zephras Isle.
 -- turnin: hand the ears in by itself when you talk to Vayn (Shift skips).
 local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true, turnin = true }
-local VAYN = "Vayn Moonclaw"
+local VAYN = "Vayn Moongaze"  -- until the turn-in window gives his name as the client spells it (db.vayn)
 
 local db
 local frame
@@ -167,7 +167,18 @@ local function Refresh()
     ui.auto:SetTextColor(unpack(db.turnin and C.accent or C.muted))
 end
 
--- A secure macro button: /target Vayn Moonclaw. Talking to her still takes your own
+local targetButton
+
+local function VaynName() return db.vayn or VAYN end
+
+-- Point the button at his name. Attributes on a secure button can't change in combat.
+local function SetTarget()
+    if not targetButton or InCombatLockdown() then return end
+    targetButton:SetAttribute("macrotext", "/target " .. VaynName())
+    targetButton.label:SetText("TARGET " .. VaynName():upper())
+end
+
+-- A secure macro button: /target Vayn Moongaze. Talking to him still takes your own
 -- click or the "Interact with Target" key: addons can't start an NPC conversation.
 -- Forever's secure buttons get OnClick on the press only, so it acts on the down.
 local function TargetButton()
@@ -178,7 +189,6 @@ local function TargetButton()
     b:RegisterForClicks("AnyDown")
     b:SetAttribute("useOnKeyDown", true)
     b:SetAttribute("type", "macro")
-    b:SetAttribute("macrotext", "/target " .. VAYN)
 
     local bg = b:CreateTexture(nil, "BACKGROUND"); Fill(bg, C.chip); bg:SetAllPoints()
     local hl = b:CreateTexture(nil, "HIGHLIGHT"); hl:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.14); hl:SetAllPoints()
@@ -186,21 +196,21 @@ local function TargetButton()
         local t = b:CreateTexture(nil, "BORDER"); t:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.35)
         t:SetPoint(side[1]); t:SetPoint(side[2]); t:SetHeight(1)
     end
-    local label = Text(b, DISPLAY, 10, C.accent, "CENTER")
-    label:SetPoint("CENTER")
-    label:SetText("TARGET VAYN MOONCLAW")
+    b.label = Text(b, DISPLAY, 10, C.accent, "CENTER")
+    b.label:SetPoint("CENTER")
 
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("Target " .. VAYN, 1, 1, 1)
-        GameTooltip:AddLine("Then right-click her, or press your Interact with Target key.", 0.761, 0.784, 0.855, true)
+        GameTooltip:AddLine("Target " .. VaynName(), 1, 1, 1)
+        GameTooltip:AddLine("Then right-click him, or press your Interact with Target key.", 0.761, 0.784, 0.855, true)
         if db.turnin then
-            GameTooltip:AddLine("The ears go in by themselves. Hold Shift as you talk to her to skip that.", 0.761, 0.784, 0.855, true)
+            GameTooltip:AddLine("The ears go in by themselves. Hold Shift as you talk to him to skip that.", 0.761, 0.784, 0.855, true)
         end
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", GameTooltip_Hide)
-    return b
+    targetButton = b
+    SetTarget()
 end
 
 local function SavePosition()
@@ -432,6 +442,8 @@ end
 -- The turn-in window lists the ears the quest takes
 local function OnQuestProgress()
     if GetQuestID() ~= REPEAT then return end
+    local npc = UnitName("npc")
+    if npc and npc ~= "" and npc ~= db.vayn then db.vayn = npc; SetTarget() end
     for i = 1, GetNumQuestItems() do
         local _, _, count, _, _, itemID = GetQuestItemInfo("required", i)
         if itemID == EAR and count and count > 0 and count ~= db.ears then
@@ -513,6 +525,7 @@ events:SetScript("OnEvent", function(_, event, arg1)
         OnQuestComplete()
     elseif event == "PLAYER_REGEN_ENABLED" then
         if afterCombat ~= nil then ShowPanel(afterCombat) end
+        SetTarget()
     end
 end)
 
@@ -531,7 +544,7 @@ SlashCmdList.NIGHTCLAWEARS = function(msg)
         Say(db.auto and "the panel opens when you arrive on Zephras Isle." or "the panel no longer opens by itself.")
     elseif msg == "turnin" or msg == "autoturnin" then
         db.turnin = not db.turnin
-        Say(db.turnin and "ears go in by themselves when you talk to Vayn Moonclaw (hold Shift to skip)."
+        Say(db.turnin and "ears go in by themselves when you talk to " .. VaynName() .. " (hold Shift to skip)."
             or "auto turn-in off: hand the ears in yourself.")
         Refresh()
     elseif msg == "help" then

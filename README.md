@@ -3,6 +3,8 @@
 A small **WoW Forever** addon for the Nightclaw Druids of Shadowgale Forest. It counts your
 **Al'Aketh Cultist's Ears** and works out how many more the druids want before you're **Exalted**.
 
+![The panel on Zephras Isle](https://raw.githubusercontent.com/paradosi/NightclawEars/main/media/screenshots/panel.png)
+
 ## What it shows
 
 A movable panel. It **opens by itself when you arrive on Zephras Isle**, where the ears drop and the druids
@@ -18,13 +20,13 @@ The ear's tooltip gets a line too: *Nightclaw Druids: 971 more ears to Exalted*.
 
 ## Turning in
 
-**Talk to Vayn Moonclaw and the ears go in by themselves.** With at least one turn-in's worth of ears in
+**Talk to Vayn Moongaze and the ears go in by themselves.** With at least one turn-in's worth of ears in
 your bags, the addon picks *More Al'Aketh Ears*, hands the ears in and takes the reward: one right-click on
 Vayn per turn-in. It touches only that quest, never picks a reward for you when there's a choice, and
-**holding Shift as you talk to her skips it** (or `/ears turnin` switches it off).
+**holding Shift as you talk to him skips it** (or `/ears turnin` switches it off).
 
-The **Target Vayn Moonclaw** button on the panel targets her, so your *Interact with Target* key (Key
-Bindings → Targeting) can then talk to her.
+The **Target Vayn Moongaze** button (it reads his name from the turn-in window, so it follows your client's language) on the panel targets him, so your *Interact with Target* key (Key
+Bindings → Targeting) can then talk to him.
 
 > [!NOTE]
 > The addon can't start the conversation for you. Talking to an NPC only works from your own click or a
@@ -40,12 +42,12 @@ Bindings → Targeting) can then talk to her.
 |---|---|
 | Faction | Nightclaw Druids (2758). Exalted begins at 42,000 standing above Neutral |
 | First quest | *Mercy Falls on Deaf Ears* (93165): 5 ears, 1,000 rep, once. Counted until you've done it |
-| Repeatable | *More Al'Aketh Ears* (93459), Vayn Moonclaw: 200 rep per turn-in |
+| Repeatable | *More Al'Aketh Ears* (93459), Vayn Moongaze: 200 rep per turn-in |
 
 The quest text says the repeatable takes 10 ears, but its objective data and Wowhead say 5, so the addon
 starts at **5 ears = 200 rep** and corrects itself:
 
-- **ears per turn-in** are read from the turn-in window when you talk to Vayn Moonclaw
+- **ears per turn-in** are read from the turn-in window when you talk to Vayn Moongaze
 - **rep per turn-in** is read from the reputation you actually gain
 - if a turn-in gives **no** reputation, the repeatable has a cap; the panel says at which standing
 
@@ -56,7 +58,7 @@ It prints a line when it learns either number, and after each turn-in.
 | | |
 |---|---|
 | `/ears` | show or hide the panel |
-| `/ears turnin` | turn auto turn-in at Vayn Moonclaw on or off |
+| `/ears turnin` | turn auto turn-in at Vayn Moongaze on or off |
 | `/ears auto` | turn opening on Zephras Isle on or off |
 | `/ears lock` | lock or unlock the panel (drag to move) |
 | `/ears reset` | move the panel back to the middle |

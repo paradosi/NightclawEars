@@ -1,10 +1,15 @@
 # Changelog
 
+## v0.4.1
+
+- The quest giver is Vayn Moongaze, not Moonclaw: the Target button now finds him. It also learns his name from
+  the turn-in window, so it works in any client language.
+
 ## v0.4.0
 
-- Auto turn-in: talk to Vayn Moonclaw with enough ears and they go in by themselves. Hold Shift to skip,
+- Auto turn-in: talk to Vayn Moongaze with enough ears and they go in by themselves. Hold Shift to skip,
   `/ears turnin` to switch it off. Only the ear quest, and never when the reward is a choice.
-- A Target Vayn Moonclaw button on the panel. Pair it with your Interact with Target key.
+- A Target Vayn Moongaze button on the panel. Pair it with your Interact with Target key.
 - The panel waits for the end of combat to open or close (the button is a secure one).
 
 ## v0.3.1
