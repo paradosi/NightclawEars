@@ -24,6 +24,10 @@ The druids of Shadowgale Forest want ears, and a lot of them. Nightclaw Ears tel
 - `/ears auto`: opening on Zephras Isle on or off
 - `/ears lock`: lock or unlock the panel (drag to move)
 - `/ears reset`: move the panel back to the middle
+- `/ears minimap`: show or hide the minimap button
+- `/ears options`: open the settings page
+
+A **minimap button** shows or hides the panel (left-click) and opens the settings (right-click); drag it to move it. The **settings page** (Esc > Options > AddOns > Nightclaw Ears) has a tick for the button and for each switch above.
 
 The addon can't start a conversation with Vayn for you: Blizzard only allows that from your own click or key binding.
 

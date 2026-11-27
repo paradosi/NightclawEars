@@ -64,6 +64,12 @@ It prints a line when it learns either number, and after each turn-in.
 | `/ears auto` | turn opening on Zephras Isle on or off |
 | `/ears lock` | lock or unlock the panel (drag to move) |
 | `/ears reset` | move the panel back to the middle |
+| `/ears minimap` | show or hide the minimap button |
+| `/ears options` | open the settings page |
+
+The **minimap button** shows or hides the panel on left-click and opens the settings on right-click; drag it
+around the edge to move it. The **settings page** (Esc > Options > AddOns > Nightclaw Ears) has a tick for the
+button and for each of the switches above.
 
 Saved variables: `NightclawEarsDB` (account-wide: panel position, learned ears and rep per turn-in, whether it opens on Zephras Isle).
 

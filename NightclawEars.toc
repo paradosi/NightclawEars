@@ -10,4 +10,5 @@
 ## X-Wago-ID: Q6aq7j6W
 ## AddonCompartmentFunc: NightclawEars_OnCompartmentClick
 
+MinimapButton.lua
 Core.lua

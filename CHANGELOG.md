@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Minimap button**: left-click shows or hides the ears panel, right-click opens the settings, drag it around the
+  edge. Turn it off in the settings or with `/ears minimap`.
+- **Settings page** (Esc > Options > AddOns > Nightclaw Ears, or `/ears options`) with ticks for the minimap
+  button, opening on Zephras Isle, auto turn-in and locking the panel.
+
 ## v1.0.0
 
 First public release, on CurseForge and Wago.

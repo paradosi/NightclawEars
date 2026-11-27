@@ -1,6 +1,6 @@
 ---- Core — count Al'Aketh Cultist's Ears against what Exalted with the Nightclaw Druids costs
 
-local addonName = ...
+local addonName, ns = ...
 
 local FACTION   = 2758    -- Nightclaw Druids (Shadowgale Forest)
 local EAR       = 258771  -- Al'Aketh Cultist's Ear
@@ -15,7 +15,9 @@ local ZONE      = 2521    -- Zephras Isle (UI map): Shadowgale Forest, the Shrin
 -- ears from the turn-in window (QUEST_PROGRESS), rep from the actual gain.
 -- shown: opened by hand (stays open everywhere). auto: open on arriving at Zephras Isle.
 -- turnin: hand the ears in by itself when you talk to Vayn (Shift skips).
-local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true, turnin = true }
+-- minimap: the button on the minimap's edge (MinimapButton.lua); minimapAngle: where on it.
+local DEFAULTS = { ears = 5, rep = 200, shown = false, locked = false, auto = true, turnin = true,
+                   minimap = true, minimapAngle = 245 }
 local VAYN = "Vayn Moongaze"  -- until the turn-in window gives his name as the client spells it (db.vayn)
 
 local db
@@ -477,6 +479,100 @@ local function AddTooltip(tooltip, data)
     end
 end
 
+---- Settings page (Esc > Options > AddOns > Nightclaw Ears) and the minimap button.
+---- The page is the panel's look: navy, gold line, Oswald labels, mono notes.
+
+local category, minimapButton
+local ticks = {}
+ns.settingsTicks = ticks  -- for tests/smoke.lua
+
+local function OpenSettings()
+    if category then Settings.OpenToCategory(category:GetID()) end
+end
+
+-- A tick bound to db[key]: hairline box, gold square when on
+local function Tick(parent, y, key, label, note, onChange)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(320, 18)
+    b:SetPoint("TOPLEFT", PAD + 4, y)
+    local box = b:CreateTexture(nil, "BORDER"); Fill(box, C.border)
+    box:SetSize(12, 12); box:SetPoint("LEFT")
+    local inner = b:CreateTexture(nil, "ARTWORK"); Fill(inner, C.deep)
+    inner:SetPoint("TOPLEFT", box, 1, -1); inner:SetPoint("BOTTOMRIGHT", box, -1, 1)
+    local mark = b:CreateTexture(nil, "OVERLAY"); Fill(mark, C.accent)
+    mark:SetPoint("TOPLEFT", box, 3, -3); mark:SetPoint("BOTTOMRIGHT", box, -3, 3)
+    local text = Text(b, DISPLAY, 12, C.secondary)
+    text:SetPoint("LEFT", box, "RIGHT", 8, 0)
+    text:SetText(label)
+    if note then
+        local n = Text(parent, MONO, 9, C.muted)
+        n:SetPoint("TOPLEFT", b, "BOTTOMLEFT", 20, -2)
+        n:SetText(note)
+    end
+    function b:SetChecked(on)
+        self.checked = on and true or false
+        mark:SetShown(self.checked)
+    end
+    b:SetScript("OnClick", function(self)
+        self:SetChecked(not self.checked)
+        db[key] = self.checked
+        if onChange then onChange(self.checked) end
+    end)
+    b:SetScript("OnEnter", function() text:SetTextColor(C.primary[1], C.primary[2], C.primary[3]) end)
+    b:SetScript("OnLeave", function() text:SetTextColor(C.secondary[1], C.secondary[2], C.secondary[3]) end)
+    ticks[key] = b
+    return b
+end
+
+local function BuildSettings()
+    local panel = CreateFrame("Frame", "NightclawEarsOptions", UIParent)
+    panel.name = "Nightclaw Ears"
+    panel:Hide()
+    local bg = panel:CreateTexture(nil, "BACKGROUND"); Fill(bg, C.bg); bg:SetAllPoints()
+
+    local logo = panel:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(40, 40); logo:SetPoint("TOPLEFT", 18, -16)
+    logo:SetTexture("Interface\\AddOns\\NightclawEars\\media\\textures\\logo_64")
+    local title = Text(panel, DISPLAY, 20, C.primary)
+    title:SetPoint("TOPLEFT", logo, "TOPRIGHT", 12, -1)
+    title:SetText("NIGHTCLAW EARS")
+    local sub = Text(panel, MONO, 11, C.muted)
+    sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+    sub:SetText("ears to Exalted with the Nightclaw Druids  ·  changes apply live")
+    GoldLine(panel, -70)
+
+    Tick(panel, -92, "minimap", "Show the minimap button",
+        "left-click: the ears panel  ·  right-click: this page  ·  drag to move it",
+        function() if minimapButton then minimapButton:Update() end end)
+    Tick(panel, -134, "auto", "Open the panel on Zephras Isle", "and close it again when you leave")
+    Tick(panel, -176, "turnin", "Hand the ears in at " .. VaynName(), "hold Shift while talking to him to skip it",
+        function() Refresh() end)
+    Tick(panel, -218, "locked", "Lock the panel", "unlocked, drag it to move it")
+
+    local hint = Text(panel, MONO, 10, C.muted)
+    hint:SetPoint("TOPLEFT", PAD + 4, -266)
+    hint:SetText("/ears shows or hides the panel  ·  /ears help lists the rest")
+
+    panel:SetScript("OnShow", function()
+        for key, t in pairs(ticks) do t:SetChecked(db[key]) end
+    end)
+    category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    Settings.RegisterAddOnCategory(category)
+end
+
+local function CreateMinimapButton()
+    minimapButton = ns.MinimapButton({
+        name = "NightclawEarsMinimapButton",
+        icon = "Interface\\AddOns\\NightclawEars\\media\\textures\\logo_64",
+        title = "Nightclaw Ears",
+        lines = { "Left-click: show or hide the ears panel", "Right-click: settings" },
+        db = db,
+        onClick = function(mouseButton)
+            if mouseButton == "RightButton" then OpenSettings() else Toggle() end
+        end,
+    })
+end
+
 ---- Events and slash command
 
 local events = CreateFrame("Frame")
@@ -507,6 +603,8 @@ events:SetScript("OnEvent", function(_, event, arg1)
         events:RegisterEvent("ZONE_CHANGED")
         if db.shown then ShowPanel(true) end
         OnZoneChanged()
+        BuildSettings()
+        CreateMinimapButton()
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" or event == "ZONE_CHANGED" then
         OnZoneChanged()
     elseif event == "UPDATE_FACTION" then
@@ -550,8 +648,14 @@ SlashCmdList.NIGHTCLAWEARS = function(msg)
         Say(db.turnin and "ears go in by themselves when you talk to " .. VaynName() .. " (hold Shift to skip)."
             or "auto turn-in off: hand the ears in yourself.")
         Refresh()
+    elseif msg == "minimap" then
+        db.minimap = not db.minimap
+        if minimapButton then minimapButton:Update() end
+        Say("minimap button " .. (db.minimap and "shown" or "hidden") .. ".")
+    elseif msg == "options" or msg == "config" or msg == "settings" then
+        OpenSettings()
     elseif msg == "help" then
-        Say("/ears shows or hides the panel · /ears turnin (auto turn-in at Vayn) · /ears auto (open on Zephras Isle) · /ears lock · /ears reset (position)")
+        Say("/ears shows or hides the panel · /ears turnin (auto turn-in at Vayn) · /ears auto (open on Zephras Isle) · /ears lock · /ears reset (position) · /ears minimap · /ears options")
     else
         Toggle()
     end

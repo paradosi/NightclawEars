@@ -12,5 +12,6 @@ ignore:
   - LICENSE
   - .github
   - .gitignore
+  - tests
   - media/art
   - media/screenshots
