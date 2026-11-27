@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.1.0
 
 - **Minimap button**: left-click shows or hides the ears panel, right-click opens the settings, drag it around the
   edge. Turn it off in the settings or with `/ears minimap`.
